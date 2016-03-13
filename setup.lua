@@ -15,6 +15,8 @@ local function createConfigDir()
 end
 
 local function createApiKeyFile(apiKey)
+   assert(apiKey)
+
    local cd, err1 = lfs.chdir(rootDirPath .. '/' .. configDirPath)
    assert(cd, err1)
 
@@ -28,15 +30,47 @@ local function createApiKeyFile(apiKey)
 		      "/" .. configApiKeyFile .. "\n")
 end
 
-local function setup()
-   io.stdout:write("Setup started\n")
+local function readUserApiKey()
    io.stdout:write("Please input your API key: ")
-   local apiKey = io.read()
+
+   return io.read()
+end
+
+local function setup()
+   io.stdout:write("=== Setup started\n")
+
+   local cd, err = lfs.chdir(rootDirPath .. '/' .. configDirPath)
+   if cd then
+      io.stdout:write("Configuration directory already exists.\n")
+
+      local apiFileExists = false
+      for file in lfs.dir(lfs.currentdir()) do
+	 if file == configApiKeyFile then
+	    apiFileExists = true
+	    break
+	 end
+      end
+
+      if apiFileExists then
+	 io.stdout:write("Do you want to update API key file [y/n]? ")
+
+	 if io.read():lower() == 'y' then
+	    goto writeApiKey
+	 else
+	    goto setupEnd
+	 end
+      else
+	 goto writeApiKey
+      end
+   end
 
    createConfigDir()
-   createApiKeyFile(apiKey)
 
-   io.stdout:write("Setup is finished\n")
+   ::writeApiKey::
+   createApiKeyFile(readUserApiKey())
+
+   ::setupEnd::
+   io.stdout:write("=== Setup is finished\n")
 end
 
 setup()
