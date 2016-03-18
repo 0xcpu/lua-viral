@@ -1,6 +1,33 @@
 utils = {}
 
-function readConfigFile()
+---
+-- Pretty print table
+-- Thanks to http://lua-users.org/wiki/TableSerialization
+local function tablePrint(tt, indent, done)
+   local done = done or {}
+   local indent = indent or 0
+   if type(tt) == "table" then
+      for key, value in pairs(tt) do
+	 io.write(string.rep(" ", indent)) -- indent it
+	 if type(value) == "table" and not done[value] then
+	    done[value] = true
+	    io.write(string.format("[%s] => table\n", tostring(key)))
+	    io.write(string.rep(" ", indent + 4)) -- indent it
+	    io.write("(\n")
+	    tablePrint(value, indent + 7, done)
+	    io.write(string.rep(" ", indent + 4)) -- indent it
+	    io.write(")\n")
+	 else
+	    io.write(string.format("[%s] => %s\n",
+				   tostring(key), tostring(value)))
+	 end
+      end
+   else
+      io.write(tt .. "\n")
+   end
+end
+
+local function readConfigFile()
    local initTab = {}
    local sectName
    local headPttrn = "%[(%w+)%]"
@@ -27,6 +54,7 @@ function readConfigFile()
    return initTab
 end
 
-utils.getConfig = readConfigFile
+utils.getConfig  = readConfigFile
+utils.tablePrint = tablePrint
 
 return utils
