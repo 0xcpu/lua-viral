@@ -1,4 +1,4 @@
-local lfs = require "lfs"
+local lfs = require 'lfs'
 
 local rootDirPath      = os.getenv("HOME")
 local configDirPath    = '.luaviral'

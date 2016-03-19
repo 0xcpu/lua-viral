@@ -1,5 +1,6 @@
 local optionParser = require 'optparse'
 local utils        = require 'utils'
+local vrtops       = require 'vrtops'
 
 local help = [[
 luaviral 0.1 - A client application that can interact with VirusTotal.
@@ -33,12 +34,29 @@ Options:
       -u, --url=URL            Send URL for scanning
       -i, --url-report         Retrieve url scan reports
       -o, --output=[FILE]      File to write output
-
 ]]
 
 local function luaviral()
    local parser = optionParser(help)
    local arg, opts = parser:parse(_G.arg)
+
+   local status, err
+   if type(opts.file) == 'function' then
+      parser:help()
+   elseif opts.file then
+      status, err = pcall(vrtops.sendFileToScan, opts.file)
+      if not status then
+	 io.stderr:write(err .. "\n")
+	 os.exit(2)
+      end
+   elseif opts.file_rescan then
+      
+   elseif opts.file_report then
+   elseif opts.url then
+   elseif opts.url_report then
+   else
+      -- do nothing
+   end
 end
 
 luaviral()

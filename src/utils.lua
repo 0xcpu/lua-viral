@@ -1,4 +1,4 @@
-utils = {}
+local utils = {}
 
 ---
 -- Pretty print table
