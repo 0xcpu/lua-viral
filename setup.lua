@@ -1,6 +1,6 @@
 local lfs = require 'lfs'
 
-local rootDirPath      = os.getenv("HOME")
+local rootDirPath      = os.getenv('HOME')
 local configDirPath    = '.luaviral'
 local configApiKeyFile = 'api_key'
 

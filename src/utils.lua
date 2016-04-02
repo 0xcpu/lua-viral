@@ -31,9 +31,9 @@ local function readConfigFile()
    local initTab = {}
    local sectName
    local headPttrn = "%[(%w+)%]"
-   local elemPttrn = "(%w+)%s+=%s+([%-]?%w+[%.]?[%w]*)"
+   local elemPttrn = "(%w+)%s+=%s+(https://www.virustotal.com/vtapi/v2/(%a+)/(%a+))"
    
-   local fh, msg = io.open("config.ini", "r")
+   local fh, msg = io.open(os.getenv('HOME') .. '/.luaviral/urls', 'r')
    if fh == nil then
       error("error opening config.ini file: " .. tostring(msg))
    end

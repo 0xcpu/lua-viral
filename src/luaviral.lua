@@ -1,6 +1,7 @@
 local optionParser = require 'optparse'
 local utils        = require 'utils'
 local vrtops       = require 'vrtops'
+local urls         = require 'urls'
 
 local help = [[
 luaviral 0.1 - A client application that can interact with VirusTotal.
@@ -37,6 +38,14 @@ Options:
 ]]
 
 local function luaviral()
+   local initTab = utils.getConfig()
+   assert(initTab)
+   for k, v in pairs(initTab) do
+      for kk, vv in pairs(v) do
+	 urls.URLS[k:lower()][kk] = vv
+      end
+   end
+
    local parser = optionParser(help)
    local arg, opts = parser:parse(_G.arg)
 
