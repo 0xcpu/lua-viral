@@ -38,9 +38,9 @@ Options:
 ]]
 
 local function luaviral()
-   local initTab = utils.getConfig()
-   assert(initTab)
-   for k, v in pairs(initTab) do
+   local urlsTab = utils.getUrls()
+   assert(urlsTab)
+   for k, v in pairs(urlsTab) do
       for kk, vv in pairs(v) do
 	 urls.URLS[k:lower()][kk] = vv
       end

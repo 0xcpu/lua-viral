@@ -1,3 +1,5 @@
+local lfs = require 'lfs'
+
 local utils = {}
 
 ---
@@ -54,7 +56,36 @@ local function readConfigFile()
    return initTab
 end
 
-utils.getConfig  = readConfigFile
+local function fileExists(srchFn)
+   for file in lfs.dir(lfs.currentdir()) do
+      if file == srchFn then
+	 return true
+      end
+   end
+   return false
+end
+
+local function readApiKey()
+   local rootDirPath      = os.getenv('HOME')
+   local configDirPath    = '.luaviral'
+   local configApiKeyFile = 'api_key'
+
+   local cd, err = lfs.chdir(rootDirPath .. '/' .. configDirPath)
+   assert(cd, err)
+   if fileExists(configApiKeyFile) then
+      local fh
+      fh, err = io.open(configApiKeyFile, 'r')
+      assert(fh, err)
+
+      return fh:read('*l')
+   else
+      error(configApiKeyFile .. ' does not exist')
+   end
+end
+
+utils.getUrls    = readConfigFile
 utils.tablePrint = tablePrint
+utils.fileExists = fileExists
+utils.getApiKey  = readApiKey
 
 return utils

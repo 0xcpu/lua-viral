@@ -1,4 +1,5 @@
-local lfs = require 'lfs'
+local lfs   = require 'lfs'
+local utils = require 'src/utils'
 
 local rootDirPath      = os.getenv('HOME')
 local configDirPath    = '.luaviral'
@@ -43,15 +44,7 @@ local function setup()
    if cd then
       io.stdout:write("Configuration directory already exists.\n")
 
-      local apiFileExists = false
-      for file in lfs.dir(lfs.currentdir()) do
-	 if file == configApiKeyFile then
-	    apiFileExists = true
-	    break
-	 end
-      end
-
-      if apiFileExists then
+      if utils.fileExists(configApiKeyFile) then
 	 io.stdout:write("Do you want to update API key file [y/n]? ")
 
 	 if io.read():lower() == 'y' then

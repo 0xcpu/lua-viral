@@ -1,8 +1,9 @@
-local lfs = require 'lfs'
-local bit = require 'bit'
-local http = require 'socket.http'
+local lfs   = require 'lfs'
+local bit   = require 'bit'
+local http  = require 'socket.http'
 local ltn12 = require 'ltn12'
 local utils = require 'utils'
+local urls  = require 'urls'
 
 local vrtops = {}
 
@@ -21,27 +22,24 @@ local function sendFileToScan(file)
 	 error(errMsg)
       end
 
+      local status, apiKey = pcall(utils.getApiKey)
+      assert(status, apiKey)
+      
       local respBody = {}
-      local url = 'https://www.virustotal.com/vtapi/v2/file/scan'
       local _, code, headers, status = http.request{
 	 method  = "POST",
-	 url     = url,
+	 url     = urls.URLS.file.scan,
 	 source  = ltn12.source.file(fh),
 	 sink    = ltn12.sink.table(respBody),
 	 headers = {
-	    ['Accept']          = '*/*',
-	    ['Accept-Encoding'] = 'gzip, deflate',
-	    ['Accept-Language'] = 'en-us',
-	    ['Content-Type']    = 'application/x-www-form-urlencoded',
 	    ['Content-length']  = fsize,
-	    ['apikey']          = 'dbfd022d379fad9d177f55eefc1d166224beef5efd73a7ae06aaf3a05f658ce4'
+	    ['apikey']          = apiKey
 	 }
       }
 
       io.stdout:write(tostring(status) .. ' \n')
       io.stdout:write(tostring(code) .. ' \n')
       utils.tablePrint(headers)
-      io.stdout:write('-----\n')
       utils.tablePrint(respBody)
    end
 end
