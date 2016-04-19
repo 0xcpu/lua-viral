@@ -32,8 +32,8 @@ local function sendFileToScan(file)
 	 source  = ltn12.source.file(fh),
 	 sink    = ltn12.sink.table(respBody),
 	 headers = {
-	    ['Content-length']  = fsize,
-	    ['apikey']          = apiKey
+	    ['Content-length'] = fsize,
+	    ['apikey']         = apiKey
 	 }
       }
 
@@ -44,6 +44,31 @@ local function sendFileToScan(file)
    end
 end
 
+local function sendUrlToScan(url)
+   assert(url)
+
+   local status, apiKey = pcall(utils.getApiKey)
+   assert(status, apiKey)
+
+   local respBody = {}
+   local _, code, headers, status = http.request{
+      method  = "POST",
+      url     = urls.URLS.url.scan,
+      sink    = ltn12.sink.table(respBody),
+      headers = {
+	 ['Content-length'] = string.len(url),
+	 ['url']            = url,
+	 ['apikey']         = apiKey
+      }
+   }
+
+   io.stdout:write(tostring(status) .. ' \n')
+   io.stdout:write(tostring(code) .. ' \n')
+   utils.tablePrint(headers)
+   utils.tablePrint(respBody)
+end
+
 vrtops.sendFileToScan = sendFileToScan
+vrtops.sendUrlToScan  = sendUrlToScan
 
 return vrtops
