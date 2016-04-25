@@ -30,7 +30,7 @@ Options:
           --version            display version information, then exit
       -v, --verbose            a combined short and long option
       -f, --file=FILE          Send FILE for scanning
-      -s, --file-rescan        Send FILE for rescanning
+      -s, --file-rescan=FILE   Send FILE for rescanning
       -r, --file-report        Retrieve file scan reports
       -u, --url=URL            Send URL for scanning
       -i, --url-report         Retrieve url scan reports
@@ -51,13 +51,17 @@ local function luaviral()
 
    local status, err
    if opts.file and type(opts.file) ~= 'function' then
-      os.exit(0)
       status, err = pcall(vrtops.sendFileToScan, opts.file)
       if not status then
 	 io.stderr:write(err .. "\n")
 	 os.exit(2)
       end
    elseif opts.file_rescan then
+      status, err = pcall(vrtops.sendFileToRescan, opts.file_rescan)
+      if not status then
+	 io.stderr:write(err .. "\n")
+	 os.exit(2)
+      end
    elseif opts.file_report then
    elseif opts.url then
       status, err = pcall(vrtops.sendUrlToScan, opts.url)
