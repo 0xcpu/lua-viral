@@ -1,9 +1,12 @@
-local lfs   = require 'lfs'
-local bit   = require 'bit'
-local http  = require 'socket.http'
-local ltn12 = require 'ltn12'
-local utils = require 'utils'
-local urls  = require 'urls'
+local lfs      = require 'lfs'
+local bit      = require 'bit'
+local http_req = require 'http.request'
+local ltn12    = require 'ltn12'
+local mime     = require 'mime'
+local utils    = require 'utils'
+local urls     = require 'urls'
+local md5      = require 'md5'
+local ui       = require 'ui'
 
 local vrtops = {}
 
@@ -24,24 +27,37 @@ local function sendFileToScan(file)
 
       local status, apiKey = pcall(utils.getApiKey)
       assert(status, apiKey)
-      
-      local respBody = {}
-      local _, code, headers, status = http.request{
-	 method  = "POST",
-	 url     = urls.URLS.file.scan,
-	 source  = ltn12.source.file(fh),
-	 sink    = ltn12.sink.table(respBody),
-	 headers = {
-	    ['Content-length'] = fsize,
-	    ['apikey']         = apiKey
-	 }
-      }
 
-      io.stdout:write(tostring(status) .. ' \n')
-      io.stdout:write(tostring(code) .. ' \n')
-      utils.tablePrint(headers)
-      utils.tablePrint(respBody)
+      local request = http_req.new_from_uri(urls.URLS.file.scan)
+      request.headers:upsert(':method', 'POST')
+      request.headers:append('content-length', fsize)
+
+      ui.showVTRequest({
+	    operation = "Scan file",
+	    VTurl     = urls.URLS.file.scan,
+	    file      = file
+      })
+
+      local respHeaders, respStream = request:go()
+      utils.tablePrint(respHeaders)
+      io.stdout:write(respStream:get_body_as_string())
    end
+end
+
+local function sendFileToRescan(file)
+   assert(file)
+
+   local hash = md5.sumhexa(file)
+
+   local status, apiKey = pcall(utils.getApiKey)
+   assert(status, apiKey)
+
+   local request = http_req.new_from_uri(urls.URLS.file.rescan)
+   request.headers:upsert(':method', 'POST')
+   request:set_body('resource=' .. hash .. '&apikey=' .. apiKey)
+
+   local respHeaders, respStream = request:go()
+   io.stdout:write(respStream:get_body_as_string())
 end
 
 local function sendUrlToScan(url)
@@ -50,25 +66,25 @@ local function sendUrlToScan(url)
    local status, apiKey = pcall(utils.getApiKey)
    assert(status, apiKey)
 
-   local respBody = {}
-   local _, code, headers, status = http.request{
-      method  = "POST",
-      url     = urls.URLS.url.scan,
-      sink    = ltn12.sink.table(respBody),
-      headers = {
-	 ['Content-length'] = string.len(url),
-	 ['url']            = url,
-	 ['apikey']         = apiKey
-      }
-   }
+   local request = http_req.new_from_uri(urls.URLS.url.scan)
+   request.headers:upsert(':method', 'POST')
+   request:set_body('url=' .. url .. '&apikey=' .. apiKey)
 
-   io.stdout:write(tostring(status) .. ' \n')
-   io.stdout:write(tostring(code) .. ' \n')
-   utils.tablePrint(headers)
-   utils.tablePrint(respBody)
+   ui.showVTRequest({
+	 operation = "Scan url",
+	 VTurl     = urls.URLS.url.scan,
+	 url       = url
+   })
+
+   local respHeaders, respStream = request:go()
+
+   local errMsg
+   status, errMsg = pcall(ui.showVTResponse, respHeaders, respStream)
+   assert(status, errMsg)
 end
 
-vrtops.sendFileToScan = sendFileToScan
-vrtops.sendUrlToScan  = sendUrlToScan
+vrtops.sendFileToScan   = sendFileToScan
+vrtops.sendFileToRescan = sendFileToRescan
+vrtops.sendUrlToScan    = sendUrlToScan
 
 return vrtops
