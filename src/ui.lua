@@ -8,6 +8,12 @@ local LV_RCODE  = "->\tResponse code: "
 local LV_PRMLNK = "->\tPermalink: "
 local LV_SCANID = "->\tScan id: "
 local LV_VTMSG  = "->\tResponse message: "
+local LV_POSTVS = "->\t\tPositives: "
+local LV_TOTAL  = "->\t\tTotal: "
+local LV_FSCNID = "->\t\tFile scan id: "
+local LV_ANTVRS = "->\t\tAnti-virus: "
+local LV_DETECT = " detected: "
+local LV_RESULT = " result: "
 
 local function showVTRequest(reqData)
    assert(reqData)
@@ -19,7 +25,7 @@ local function showVTRequest(reqData)
    io.stdout:flush()
 end
 
-local function showVTResponse(headers, stream)
+local function showVTResponse(headers, stream, report, repType)
    assert(headers)
    assert(stream)
 
@@ -29,10 +35,36 @@ local function showVTResponse(headers, stream)
    assert(bodyTab)
 
    io.stdout:write(LV_HEADER)
-   io.stdout:write(LV_RCODE .. headers:get(':status') .. "\n")
-   io.stdout:write(LV_PRMLNK .. bodyTab.permalink .. "\n")
-   io.stdout:write(LV_SCANID .. bodyTab.scan_id .. "\n")
+   local respCode = headers:get(':status')
+   io.stdout:write(LV_RCODE .. respCode .. "\n")
    io.stdout:write(LV_VTMSG .. bodyTab.verbose_msg .. "\n")
+   if respCode == '200' then
+      if bodyTab.permalink and bodyTab.scan_id then
+	 io.stdout:write(LV_PRMLNK .. bodyTab.permalink .. "\n")
+	 io.stdout:write(LV_SCANID .. bodyTab.scan_id .. "\n")
+      else
+	 io.stdout:flush()
+	 return
+      end
+
+      if report then
+	 if repType == 'file' then
+	    -- to do
+	 elseif repType == 'url' then
+	    io.stdout:write(LV_POSTVS .. bodyTab.positives .. "\n")
+	    io.stdout:write(LV_TOTAL .. bodyTab.total .. "\n")
+	    io.stdout:write(LV_FSCNID .. bodyTab.filescan_id .. "\n")
+	    for k, v in pairs(bodyTab.scans) do
+	       io.stdout:write(table.concat({
+				     LV_ANTVRS, k, LV_DETECT, v.detected,
+				     LV_RESULT, v.result, "\n"
+	       }))
+	    end
+	 else
+	    error("Unknown report type")
+	 end
+      end
+   end
    io.stdout:flush()
 end
 

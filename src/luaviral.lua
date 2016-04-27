@@ -33,7 +33,7 @@ Options:
       -s, --file-rescan=FILE   Send FILE for rescanning
       -r, --file-report        Retrieve file scan reports
       -u, --url=URL            Send URL for scanning
-      -i, --url-report         Retrieve url scan reports
+      -i, --url-report=URL     Retrieve url scan reports
       -o, --output=[FILE]      File to write output
 ]]
 
@@ -70,6 +70,11 @@ local function luaviral()
 	 os.exit(2)
       end
    elseif opts.url_report then
+      status, err = pcall(vrtops.getUrlScanReport, opts.url_report)
+      if not status then
+	 io.stderr:write(err .. "\n")
+	 os.exit(2)
+      end
    else
       parser:help()
    end

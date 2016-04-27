@@ -83,8 +83,32 @@ local function sendUrlToScan(url)
    assert(status, errMsg)
 end
 
+local function getUrlScanReport(rsrc)
+   assert(rsrc)
+   
+   local status, apiKey = pcall(utils.getApiKey)
+   assert(status, apiKey)
+
+   local request = http_req.new_from_uri(urls.URLS.url.report)
+   request.headers:upsert(':method', 'POST')
+   request:set_body('resource=' .. rsrc .. 'scan=1&apikey=' .. apiKey)
+
+   ui.showVTRequest({
+	 operation = "URL scan report",
+	 VTurl     = urls.URLS.url.report,
+	 resource  = rsrc
+   })
+
+   local respHeaders, respStream = request:go()
+
+   local errMsg
+   status, errMsg = pcall(ui.showVTResponse, respHeaders, respStream, true, 'url')
+   assert(status, errMsg)
+end
+
 vrtops.sendFileToScan   = sendFileToScan
 vrtops.sendFileToRescan = sendFileToRescan
 vrtops.sendUrlToScan    = sendUrlToScan
+vrtops.getUrlScanReport = getUrlScanReport
 
 return vrtops
