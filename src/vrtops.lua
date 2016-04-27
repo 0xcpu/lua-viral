@@ -91,7 +91,7 @@ local function getUrlScanReport(rsrc)
 
    local request = http_req.new_from_uri(urls.URLS.url.report)
    request.headers:upsert(':method', 'POST')
-   request:set_body('resource=' .. rsrc .. 'scan=1&apikey=' .. apiKey)
+   request:set_body('resource=' .. rsrc .. '&apikey=' .. apiKey .. '&scan=1')
 
    ui.showVTRequest({
 	 operation = "URL scan report",

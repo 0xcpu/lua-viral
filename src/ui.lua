@@ -11,9 +11,7 @@ local LV_VTMSG  = "->\tResponse message: "
 local LV_POSTVS = "->\t\tPositives: "
 local LV_TOTAL  = "->\t\tTotal: "
 local LV_FSCNID = "->\t\tFile scan id: "
-local LV_ANTVRS = "->\t\tAnti-virus: "
-local LV_DETECT = " detected: "
-local LV_RESULT = " result: "
+local LV_RESULT = "->\t\tAnti-virus: %- 30s detected: %- 5s result: %- 15s\n"
 
 local function showVTRequest(reqData)
    assert(reqData)
@@ -43,28 +41,31 @@ local function showVTResponse(headers, stream, report, repType)
 	 io.stdout:write(LV_PRMLNK .. bodyTab.permalink .. "\n")
 	 io.stdout:write(LV_SCANID .. bodyTab.scan_id .. "\n")
       else
-	 io.stdout:flush()
-	 return
+	 goto funcEnd
       end
 
       if report then
 	 if repType == 'file' then
 	    -- to do
 	 elseif repType == 'url' then
-	    io.stdout:write(LV_POSTVS .. bodyTab.positives .. "\n")
-	    io.stdout:write(LV_TOTAL .. bodyTab.total .. "\n")
-	    io.stdout:write(LV_FSCNID .. bodyTab.filescan_id .. "\n")
-	    for k, v in pairs(bodyTab.scans) do
-	       io.stdout:write(table.concat({
-				     LV_ANTVRS, k, LV_DETECT, v.detected,
-				     LV_RESULT, v.result, "\n"
-	       }))
+	    if bodyTab.positives then
+	       io.stdout:write(LV_POSTVS .. bodyTab.positives .. "\n")
+	       io.stdout:write(LV_TOTAL .. bodyTab.total .. "\n")
+	       for k, v in pairs(bodyTab.scans) do
+		  io.stdout:write(
+		     string.format(LV_RESULT, k, tostring(v.detected), v.result)
+		  )
+	       end
+	    else
+	       goto funcEnd
 	    end
 	 else
 	    error("Unknown report type")
 	 end
       end
    end
+
+   ::funcEnd::
    io.stdout:flush()
 end
 
