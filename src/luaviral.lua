@@ -31,7 +31,7 @@ Options:
       -v, --verbose            a combined short and long option
       -f, --file=FILE          Send FILE for scanning
       -s, --file-rescan=FILE   Send FILE for rescanning
-      -r, --file-report        Retrieve file scan reports
+      -r, --file-report=FILE   Retrieve file scan reports
       -u, --url=URL            Send URL for scanning
       -i, --url-report=URL     Retrieve url scan reports
       -o, --output=[FILE]      File to write output
@@ -63,6 +63,11 @@ local function luaviral()
 	 os.exit(2)
       end
    elseif opts.file_report then
+      status, err = pcall(vrtops.getFileScanReport, opts.file_report)
+      if not status then
+	 io.stderr:write(err .. "\n")
+	 os.exit(2)
+      end
    elseif opts.url then
       status, err = pcall(vrtops.sendUrlToScan, opts.url)
       if not status then
