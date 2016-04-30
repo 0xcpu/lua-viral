@@ -4,14 +4,15 @@ local utils = require 'utils'
 local ui = {}
 
 local LV_HEADER = "[=== LuaViral ===]\n"
-local LV_RCODE  = "->\tResponse code: "
+local LV_HTTPCD = "->\tHTTP response code: "
+local LV_RCODE  = "->\tVirusTotal response code: "
 local LV_PRMLNK = "->\tPermalink: "
 local LV_SCANID = "->\tScan id: "
 local LV_VTMSG  = "->\tResponse message: "
 local LV_POSTVS = "->\t\tPositives: "
 local LV_TOTAL  = "->\t\tTotal: "
 local LV_FSCNID = "->\t\tFile scan id: "
-local LV_RESULT = "->\t\tAnti-virus: %- 30s detected: %- 5s result: %- 15s\n"
+local LV_RESULT = "->\t\tAnti-virus: %- 30s detected: %- 5s result: %- 25s\n"
 
 local function showVTRequest(reqData)
    assert(reqData)
@@ -34,9 +35,11 @@ local function showVTResponse(headers, stream, report, repType)
 
    io.stdout:write(LV_HEADER)
    local respCode = headers:get(':status')
-   io.stdout:write(LV_RCODE .. respCode .. "\n")
-   io.stdout:write(LV_VTMSG .. bodyTab.verbose_msg .. "\n")
+   io.stdout:write(LV_HTTPCD .. respCode .. "\n")
    if respCode == '200' then
+      io.stdout:write(LV_RCODE .. (bodyTab.response_code or 'no response_code') .. "\n")
+      io.stdout:write(LV_VTMSG .. (bodyTab.verbose_msg or 'no verbose_msg') .. "\n")
+
       if bodyTab.permalink and bodyTab.scan_id then
 	 io.stdout:write(LV_PRMLNK .. bodyTab.permalink .. "\n")
 	 io.stdout:write(LV_SCANID .. bodyTab.scan_id .. "\n")
@@ -45,9 +48,7 @@ local function showVTResponse(headers, stream, report, repType)
       end
 
       if report then
-	 if repType == 'file' then
-	    -- to do
-	 elseif repType == 'url' then
+	 if repType == 'file' or repType == 'url' then
 	    if bodyTab.positives then
 	       io.stdout:write(LV_POSTVS .. bodyTab.positives .. "\n")
 	       io.stdout:write(LV_TOTAL .. bodyTab.total .. "\n")
