@@ -2,62 +2,95 @@ local lfs      = require 'lfs'
 local bit      = require 'bit'
 local http_req = require 'http.request'
 local ltn12    = require 'ltn12'
-local mime     = require 'mime'
+local curl     = require 'lcurl'
 local utils    = require 'utils'
 local urls     = require 'urls'
-local md5      = require 'md5'
+local lcrypt   = require 'lcrypt'
 local ui       = require 'ui'
 
 local vrtops = {}
 
-local function sendFileToScan(file)
-   assert(file)
+local function sendFileToScan(filePath)
+   assert(filePath)
 
-   local fh, errMsg = lfs.attributes(file)
+   local fh, errMsg = lfs.attributes(filePath)
    if fh == nil then
       error(errMsg)
    elseif bit.rshift(fh.size, 20) > 32 then
       error("File size exceeds 32MB(Allowed size by VirusTotal)")
    else
       local fsize = fh.size
-      fh, errMsg = io.open(file, 'rb')
-      if fh == nil then
-	 error(errMsg)
-      end
+      local fname = string.sub(filePath, (string.find(filePath, '/[^/]-$') or 0) + 1)
 
       local status, apiKey = pcall(utils.getApiKey)
       assert(status, apiKey)
 
-      local request = http_req.new_from_uri(urls.URLS.file.scan)
-      request.headers:upsert(':method', 'POST')
-      request.headers:append('content-length', fsize)
+      -- To Do
 
       ui.showVTRequest({
-	    operation = "Scan file",
+	    operation = "File scan",
 	    VTurl     = urls.URLS.file.scan,
-	    file      = file
+	    filePath  = filePath
       })
-
-      local respHeaders, respStream = request:go()
-      utils.tablePrint(respHeaders)
-      io.stdout:write(respStream:get_body_as_string())
    end
 end
 
-local function sendFileToRescan(file)
-   assert(file)
+local function sendFileToRescan(filePath)
+   assert(filePath)
 
-   local hash = md5.sumhexa(file)
+   local fname = string.sub(filePath, (string.find(filePath, '/[^/]-$') or 0) + 1)
+   local fhash = lcrypt.hash(lcrypt.hashes.sha256,
+			    lcrypt.hash_modes.hash,
+			    fname):done()
+   assert(fhash)
 
    local status, apiKey = pcall(utils.getApiKey)
    assert(status, apiKey)
 
    local request = http_req.new_from_uri(urls.URLS.file.rescan)
    request.headers:upsert(':method', 'POST')
-   request:set_body('resource=' .. hash .. '&apikey=' .. apiKey)
+   request:set_body('resource=' .. fhash .. '&apikey=' .. apiKey)
+
+   ui.showVTRequest({
+	 operation = "File rescan",
+	 VTurl     = urls.URLS.file.rescan,
+	 filePath  = filePath
+   })
 
    local respHeaders, respStream = request:go()
-   io.stdout:write(respStream:get_body_as_string())
+
+   local errMsg
+   status, errMsg = pcall(ui.showVTResponse, respHeaders, respStream)
+   assert(status, errMsg)
+end
+
+local function getFileScanReport(filePath)
+   assert(filePath)
+
+   local fname = string.sub(filePath, (string.find(filePath, '/[^/]-$') or 0) + 1)
+   local fhash = lcrypt.hash(lcrypt.hashes.sha256,
+			    lcrypt.hash_modes.hash,
+			    fname):done()
+   assert(fhash)
+
+   local status, apiKey = pcall(utils.getApiKey)
+   assert(status, apiKey)
+
+   local request = http_req.new_from_uri(urls.URLS.file.report)
+   request.headers:upsert(':method', 'POST')
+   request:set_body('resource=' .. fhash .. '&apikey=' .. apiKey)
+
+   ui.showVTRequest({
+	 operation = "File scan report",
+	 VTurl     = urls.URLS.file.report,
+	 filePath  = filePath
+   })
+
+   local respHeaders, respStream = request:go()
+
+   local errMsg
+   status, errMsg = pcall(ui.showVTResponse, respHeaders, respStream, true, 'file')
+   assert(status, errMsg)
 end
 
 local function sendUrlToScan(url)
@@ -106,9 +139,10 @@ local function getUrlScanReport(rsrc)
    assert(status, errMsg)
 end
 
-vrtops.sendFileToScan   = sendFileToScan
-vrtops.sendFileToRescan = sendFileToRescan
-vrtops.sendUrlToScan    = sendUrlToScan
-vrtops.getUrlScanReport = getUrlScanReport
+vrtops.sendFileToScan    = sendFileToScan
+vrtops.sendFileToRescan  = sendFileToRescan
+vrtops.getFileScanReport = getFileScanReport
+vrtops.sendUrlToScan     = sendUrlToScan
+vrtops.getUrlScanReport  = getUrlScanReport
 
 return vrtops
