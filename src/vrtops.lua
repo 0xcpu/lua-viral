@@ -25,13 +25,21 @@ local function sendFileToScan(filePath)
       local status, apiKey = pcall(utils.getApiKey)
       assert(status, apiKey)
 
-      -- To Do
-
       ui.showVTRequest({
 	    operation = "File scan",
 	    VTurl     = urls.URLS.file.scan,
 	    filePath  = filePath
       })
+
+      local easy = curl.easy()
+	 :setopt_url(urls.URLS.file.scan)
+	 :setopt_httppost(curl.form()
+			     :add_content('apikey', apiKey, 'text/plain')
+			     :add_file('file', filePath, 'application/octet-stream',
+				       fname, {'Content-length: ' .. fsize}
+			 ))
+	 :perform()
+	 :close()
    end
 end
 
@@ -39,9 +47,9 @@ local function sendFileToRescan(filePath)
    assert(filePath)
 
    local fname = string.sub(filePath, (string.find(filePath, '/[^/]-$') or 0) + 1)
-   local fhash = lcrypt.hash(lcrypt.hashes.sha256,
-			    lcrypt.hash_modes.hash,
-			    fname):done()
+   local fhash = lcrypt.tohex(lcrypt.hash(lcrypt.hashes.sha256,
+					  lcrypt.hash_modes.hash,
+					  fname):done())
    assert(fhash)
 
    local status, apiKey = pcall(utils.getApiKey)
@@ -68,9 +76,9 @@ local function getFileScanReport(filePath)
    assert(filePath)
 
    local fname = string.sub(filePath, (string.find(filePath, '/[^/]-$') or 0) + 1)
-   local fhash = lcrypt.hash(lcrypt.hashes.sha256,
-			    lcrypt.hash_modes.hash,
-			    fname):done()
+   local fhash = lcrypt.tohex(lcrypt.hash(lcrypt.hashes.sha256,
+					  lcrypt.hash_modes.hash,
+					  fname):done())
    assert(fhash)
 
    local status, apiKey = pcall(utils.getApiKey)
