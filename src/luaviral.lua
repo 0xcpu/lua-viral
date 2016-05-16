@@ -50,36 +50,28 @@ local function luaviral()
    local arg, opts = parser:parse(_G.arg)
 
    local status, err
+   local checkExecStatus = function()
+      if not status then
+	 io.stderr:write("Error:" .. err .. "\n")
+	 os.exit(2)
+      end
+   end
+
    if opts.file and type(opts.file) ~= 'function' then
       status, err = pcall(vrtops.sendFileToScan, opts.file)
-      if not status then
-	 io.stderr:write(err .. "\n")
-	 os.exit(2)
-      end
+      checkExecStatus()
    elseif opts.file_rescan then
       status, err = pcall(vrtops.sendFileToRescan, opts.file_rescan)
-      if not status then
-	 io.stderr:write(err .. "\n")
-	 os.exit(2)
-      end
+      checkExecStatus()
    elseif opts.file_report then
       status, err = pcall(vrtops.getFileScanReport, opts.file_report)
-      if not status then
-	 io.stderr:write(err .. "\n")
-	 os.exit(2)
-      end
+      checkExecStatus()
    elseif opts.url then
       status, err = pcall(vrtops.sendUrlToScan, opts.url)
-      if not status then
-	 io.stderr:write(err .. "\n")
-	 os.exit(2)
-      end
+      checkExecStatus()
    elseif opts.url_report then
       status, err = pcall(vrtops.getUrlScanReport, opts.url_report)
-      if not status then
-	 io.stderr:write(err .. "\n")
-	 os.exit(2)
-      end
+      checkExecStatus()
    else
       parser:help()
    end
